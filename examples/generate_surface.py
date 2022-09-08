@@ -15,7 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .primitives import *
-from .directives import *
-from .mesh import *
-from .lines import *
+from povray import *
+
+d = 3
+radius = 0.5
+spheres1 = Union([Sphere(np.random.random(d), radius) for i in range(d)])
+print(spheres1)
+spheres2 = Union(*[Sphere(np.random.random(d), radius) for i in range(d)])
+print(spheres2)
+print(Merge(spheres1, spheres2))
+
+print(Macro('abc', Sphere(np.random.random(d), 'radius'), arguments=['radius']))
+print(Declare('abc', Sphere(np.random.random(d), radius)))
+
+N = 25
+x = np.linspace(0, 1, N)
+y = np.linspace(0, 1, N)
+X, Y = np.meshgrid(x, y)
+Z = X*(1-X) * Y*(1-Y)
+
+coordinates, triangles = triangulate_grid(X, Y, Z)
+print(Mesh2(coordinates, triangles))
