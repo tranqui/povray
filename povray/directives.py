@@ -36,6 +36,48 @@ class Macro(Primitive):
     def body_close(self):
         return '#end'
 
+class Version(Primitive):
+    def __init__(self, version, *args, **kwargs):
+        self.version = version
+        super().__init__(*args, **kwargs)
+
+    @property
+    def header(self):
+        return '#{}'.format(super().header)
+
+    @property
+    def body_open(self):
+        return ' '
+
+    @property
+    def body(self):
+        return '{}'.format(self.version)
+
+    @property
+    def body_close(self):
+        return ';'
+
+class Include(Primitive):
+    def __init__(self, path, *args, **kwargs):
+        self.path = path
+        super().__init__(*args, **kwargs)
+
+    @property
+    def header(self):
+        return '#{}'.format(super().header)
+
+    @property
+    def body_open(self):
+        return ' "'
+
+    @property
+    def body(self):
+        return '{}'.format(self.path)
+
+    @property
+    def body_close(self):
+        return '"'
+
 class Declare(Primitive):
     def __init__(self, name, *args, **kwargs):
         self.name = name

@@ -17,7 +17,7 @@
 
 import numpy as np
 from scipy import interpolate
-from .primitives import Cylinder, Sphere
+from .primitives import *
 
 def stipple_coordinates(coordinates, resolutions=None, eps=1e-12):
     if resolutions is None: return coordinates

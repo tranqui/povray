@@ -21,13 +21,20 @@ import io
 from .syntax import *
 
 class Primitive:
-    def __init__(self, *args, single_line=False, **kwargs):
-        self.single_line = single_line
-        self.children = []
-        for arg in args:
-            try: self.children += arg
-            except: self.children += [arg]
+    def __init__(self, *args, value=None, **kwargs):
+        self.value = value
+        self.children = [arg for arg in args]
         self.children = list(chain(self.children)) # flatten list of lists
+
+    def __iter__(self):
+        for child in self.children: yield child
+
+    def __contains__(self, element):
+        return element in self.children
+
+    def __iadd__(self, element):
+        self.children += element
+        return self
 
     @property
     def header(self):
@@ -43,27 +50,41 @@ class Primitive:
 
     @property
     def body(self):
+        if self.value is not None: return self.value
         raise NotImplementedError
 
-    def write(self, f=sys.stdout, nest=0):
+    @property
+    def start_nest(self):
+        return 0
+
+    def write(self, f=sys.stdout, nest=None):
         """Generate the povray script.
 
         Args:
             f: filestream to output to.
         """
 
+        if nest is None: nest = self.start_nest
         indent = '  ' * nest
         f.write('{}{}'.format(indent, self.header))
 
         if len(self.children):
             if len(self.body_open): f.write('\n{}{}'.format(indent, self.body_open))
-            for child in self.children:
-                f.write('\n')
+
+            # If a body is defined, then write it first.
+            try:
+                body = self.body
+                f.write('\n  {}{}'.format(indent, body))
+            except: pass
+
+            for i,child in enumerate(self.children):
+                if i > 0 or len(self.header): f.write('\n')
+                #if nest == 0: f.write('\n')
                 child.write(f, nest+1)
             f.write('\n{}{}'.format(indent, self.body_close))
 
         else:
-            f.write(' {} {} {}'.format(self.body_open, self.body, self.body_close))
+            f.write('{}{}{}'.format(self.body_open, self.body, self.body_close))
 
     def __repr__(self):
         f = io.StringIO()
@@ -74,12 +95,11 @@ class Attribute(Primitive):
     """Simple one line key-value attribute."""
 
     def __init__(self, value, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.value = value
+        super().__init__(*args, value=value, **kwargs)
 
     @property
     def body_open(self):
-        return ''
+        return ' '
 
     @property
     def body(self):
@@ -87,7 +107,25 @@ class Attribute(Primitive):
 
     @property
     def body_close(self):
+        return ' '
+
+class Flag(Attribute):
+    """Attribute without a value."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, value=None, **kwargs)
+
+    @property
+    def body_open(self):
+        return ' '
+
+    @property
+    def body(self):
         return ''
+
+    @property
+    def body_open(self):
+        return ' '
 
 # Basic combinations of objects:
 class Union(Primitive): pass
