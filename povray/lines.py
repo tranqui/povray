@@ -19,7 +19,7 @@ import numpy as np
 from scipy import interpolate
 from .primitives import *
 
-def stipple_coordinates(coordinates, resolutions=None, eps=1e-12):
+def stipple_coordinates(coordinates, resolutions=None, exclude_out_of_bounds=False, eps=1e-12):
     if resolutions is None: return coordinates
     ds = np.linalg.norm(np.diff(coordinates, axis=0), axis=1)
     path_lengths = np.concatenate(([0], np.cumsum(ds, axis=0)))
@@ -31,9 +31,11 @@ def stipple_coordinates(coordinates, resolutions=None, eps=1e-12):
     sample_points = (np.tile(sample_points.reshape(-1,1), len(stencil)) + stencil).reshape(-1)
 
     out_of_bounds = sample_points > path_lengths[-1]
-    #if np.any(out_of_bounds):
-    sample_points[out_of_bounds] = path_lengths[-1]
-    sample_points = sample_points[:1+np.where(out_of_bounds)[0][0]]
+    if exclude_out_of_bounds:
+        sample_points = sample_points[~out_of_bounds]
+    else:
+        sample_points[out_of_bounds] = path_lengths[-1]
+        sample_points = sample_points[:1+np.where(out_of_bounds)[0][0]]
 
     return f(sample_points).T
 
@@ -58,5 +60,22 @@ def line(coordinates, line_width, *args, stipple=None, smooth=True, **kwargs):
         # Round the edges of the cylinders where the lines join to make it smooth.
         for v in np.unique(coordinates, axis=0):
             objects += [Sphere(pov_vector(v), line_width)]
+
+    return Merge(*objects, *args, **kwargs)
+
+def arrowed_line(coordinates, line_width, arrow_separation, arrow_length, arrow_width, *args, smooth=True, **kwargs):
+    """Generates a line containing arrows in 3d as the union of cylinders and cones
+    that can be rendered with ray-tracing."""
+
+    objects = []
+
+    # Create the line as a series of cylinders joining adjacent points.
+    for v1, v2 in zip(coordinates, coordinates[1:]):
+        if np.linalg.norm(v2 - v1) > 0:
+            objects += [Cylinder(pov_vector(v1), pov_vector(v2), line_width)]
+
+    arrow_coords = stipple_coordinates(coordinates, (arrow_separation, arrow_length), exclude_out_of_bounds=True)
+    for a, b in zip(arrow_coords[::2], arrow_coords[1::2]):
+        objects += [Cone(a, b, arrow_width, 0)]
 
     return Merge(*objects, *args, **kwargs)

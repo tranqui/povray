@@ -153,3 +153,15 @@ class Cylinder(Primitive):
     @property
     def body(self):
         return '{}, {}, {}'.format(self.position1, self.position2, self.radius)
+
+class Cone(Primitive):
+    def __init__(self, position1, position2, radius1, radius2, *args, **kwargs):
+        self.position1 = pov_vector(position1)
+        self.position2 = pov_vector(position2)
+        self.radius1 = str(radius1)
+        self.radius2 = str(radius2)
+        super().__init__(*args, **kwargs)
+
+    @property
+    def body(self):
+        return '{}, {}, {}, {}'.format(self.position1, self.radius1, self.position2, self.radius2)
