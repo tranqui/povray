@@ -63,7 +63,7 @@ def line(coordinates, line_width, *args, stipple=None, smooth=True, **kwargs):
 
     return Merge(*objects, *args, **kwargs)
 
-def arrowed_line(coordinates, line_width, arrow_separation, arrow_length, arrow_width, *args, smooth=True, **kwargs):
+def arrowed_line(coordinates, line_width, arrow_separation, arrow_length, arrow_width, *args, smooth=True, reverse=False, **kwargs):
     """Generates a line containing arrows in 3d as the union of cylinders and cones
     that can be rendered with ray-tracing."""
 
@@ -76,6 +76,7 @@ def arrowed_line(coordinates, line_width, arrow_separation, arrow_length, arrow_
 
     arrow_coords = stipple_coordinates(coordinates, (arrow_separation, arrow_length), exclude_out_of_bounds=True)
     for a, b in zip(arrow_coords[::2], arrow_coords[1::2]):
+        if reverse: a, b = b, a
         objects += [Cone(a, b, arrow_width, 0)]
 
     return Merge(*objects, *args, **kwargs)
